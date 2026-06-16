@@ -41,7 +41,7 @@ function syncDailyTabs() {
   const tagMap = {
     "Monday Mix": targetDailyTabs[1] ? targetDailyTabs[1].trim() : "Monday",
     "Troubleshoot Tuesday": targetDailyTabs[2] ? targetDailyTabs[2].trim() : "Tuesday",
-    "Wednesdays Genus & Species Gallery": targetDailyTabs[3] ? targetDailyTabs[3].trim() : "Wednesday",
+    "Wednesdays Genus and Species Gallery": targetDailyTabs[3] ? targetDailyTabs[3].trim() : "Wednesday",
     "Thirsty Thursdays": targetDailyTabs[4] ? targetDailyTabs[4].trim() : "Thursday",
     "Fun Fact Friday": targetDailyTabs[5] ? targetDailyTabs[5].trim() : "Friday",
     "Member Spotlight": "Other",
@@ -283,7 +283,7 @@ function applySeriesDropdown(sheet, lastRow) {
     .requireValueInList([
       "Monday Mix",
       "Troubleshoot Tuesday",
-      "Wednesdays Genus & Species Gallery",
+      "Wednesdays Genus and Species Gallery",
       "Thirsty Thursdays",
       "Fun Fact Friday",
       "Member Spotlight",
