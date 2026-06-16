@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <style>
+      :root {
+        --tos-purple: #6a4a7c;
+        --tos-green: #7da54b;
+        --text-main: #2c3e50;
+      }
+      body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 12px; color: var(--text-main); line-height: 1.4; }
+      .header { border-bottom: 2px solid var(--tos-purple); margin-bottom: 15px; padding-bottom: 5px; }
+      .header h2 { font-size: 16px; margin: 0; color: var(--tos-purple); text-transform: uppercase; letter-spacing: 1px; }
+      
+      .control-group { margin-bottom: 20px; }
+      label { display: block; font-size: 11px; font-weight: bold; margin-bottom: 5px; color: #666; }
+      
+      input[type="date"] {
+        width: 90%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; margin-bottom: 8px;
+      }
+      
+      button {
+        width: 100%; padding: 10px; margin-bottom: 8px; border: none; border-radius: 4px;
+        background-color: #f0f0f0; color: var(--text-main); font-weight: 600; cursor: pointer;
+        transition: all 0.2s; border-left: 4px solid transparent;
+      }
+      button:hover { background-color: #e2e2e2; border-left: 4px solid var(--tos-green); }
+      .btn-primary { background-color: var(--tos-purple); color: white; }
+      .btn-primary:hover { background-color: #553a63; border-left: 4px solid var(--tos-green); }
+      
+      .footer { font-size: 10px; color: #999; text-align: center; margin-top: 30px; border-top: 1px id="solid" #eee; padding-top: 10px; }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <h2><?= CONFIG.ORGANIZATION_NAME ?> Sidebar</h2>
+    </div>
+
+    <div class="control-group">
+      <label>NAVIGATE TO DATE</label>
+      <input type="date" id="dateInput">
+      <button class="btn-primary" onclick="runJump()">Jump to Row</button>
+    </div>
+
+    <div class="control-group">
+      <label>SORTING & ORGANIZATION</label>
+      <button onclick="runSort(2)">Sort by Series Title</button>
+      <button onclick="runSort(1)">Sort by Post Status</button>
+    </div>
+
+    <div class="footer">
+      <?= CONFIG.ORGANIZATION_NAME ?> Toolkit | Digital Strategy
+    </div>
+
+    <script>
+      function runJump() {
+        const dateVal = document.getElementById('dateInput').value;
+        if (!dateVal) return;
+        google.script.run
+          .withFailureHandler(msg => alert(msg))
+          .jumpToDate(dateVal);
+      }
+
+      function runSort(col) {
+        google.script.run.sortPlanner(col);
+      }
+    </script>
+  </body>
+</html>

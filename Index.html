@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600&family=Roboto:wght@300;400&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+      /* --- GLOBAL STYLES --- */
+      body { background-color: #f8f9fa; font-family: 'Roboto', sans-serif; color: #444; }
+      h1, h2, h3, h4 { font-family: 'Montserrat', sans-serif; color: #2d5a27; }
+      .hub-subtitle { font-family: 'Montserrat', sans-serif; color: #76A5AF; letter-spacing: 2px; font-size: 1.1rem; }
+      
+      /* --- IMAGE LOADING PULSE --- */
+      .img-container { height: 220px; width: 100%; overflow: hidden; background-color: #e9ecef; position: relative; }
+      .loading-pulse { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(90deg, #e9ecef 25%, #f8f9fa 50%, #e9ecef 75%); background-size: 200% 100%; animation: pulse 1.5s infinite; }
+      @keyframes pulse { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+      .card-img-top { height: 100%; width: 100%; object-fit: cover; opacity: 0; transition: opacity 0.5s; }
+      .img-loaded { opacity: 1; }
+
+      /* --- CARDS & FILTERS --- */
+      .filter-btn { border-radius: 50px; padding: 6px 18px; margin: 4px; background: #fff; border: 1px solid #ddd; font-size: 0.75rem; cursor: pointer; transition: 0.2s; }
+      .filter-btn.active { background-color: #76A5AF; color: white; border-color: #76A5AF; }
+      
+      .filter-btn-drafts.active { background-color: #6c757d !important; border-color: #6c757d !important; }
+      .filter-btn-needs.active { background-color: #dc3545 !important; border-color: #dc3545 !important; }
+
+      .card { border: none; border-radius: 15px; overflow: hidden; height: 100%; box-shadow: 0 4px 12px rgba(0,0,0,0.05); background: white; transition: 0.3s; cursor: pointer; border-top: 6px solid transparent; display: flex; flex-direction: column; }
+      .card:hover { transform: translateY(-5px); }
+      
+      .status-Scheduled { border-top-color: #6AA84F; }
+      .status-Published { border-top-color: #A2C4C9; }
+      .status-Drafts { border-top-color: #6c757d; }
+      .status-Needs-Content { border-top-color: #dc3545; }
+
+      .card-body { flex-grow: 1; display: flex; flex-direction: column; padding: 1.25rem; }
+      .series-tag { font-weight: bold; font-size: 0.7rem; color: #76A5AF; text-transform: uppercase; margin-bottom: 8px; }
+      .read-more-label { color: #76A5AF; font-weight: bold; font-size: 0.8rem; margin-top: auto; padding-top: 15px; }
+
+      /* --- STRATEGY MODAL STYLES --- */
+      .table-strat { font-size: 0.85rem; width: 100%; border-collapse: collapse; margin-bottom: 40px; }
+      .table-strat th { background-color: #ffffff; color: #2d5a27; border-bottom: 2px solid #2d5a27; font-weight: 700; padding: 12px; text-align: left; }
+      .table-strat td { padding: 12px; border: 1px solid #eee; text-align: left; }
+      
+      .strat-pill { display: inline-block; width: 135px; text-align: center; padding: 5px 0; border-radius: 50px; font-weight: bold; font-size: 0.7rem; }
+      
+      /* Spreadsheet Color Coordination */
+      .pill-active { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; } /* Green */
+      .pill-dev { background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba; }    /* Orange/Yellow */
+      .pill-info { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }   /* Red */
+
+      .breakdown-header { font-weight: bold; font-size: 1.5rem; color: #2d5a27; border-bottom: 2px solid #2d5a27; padding-bottom: 5px; margin-top: 2rem; margin-bottom: 1.5rem; text-align: left;}
+      .breakdown-day { font-weight: bold; font-size: 1.1rem; color: #333; display: block; margin-top: 1.5rem; text-align: left; }
+      .breakdown-subhead { font-weight: bold; display: block; margin-top: 5px; text-align: left; }
+      .breakdown-content { padding-left: 0; margin-top: 5px; text-align: left; line-height: 1.5; }
+      .breakdown-italic { font-style: italic; color: #555; }
+
+      /* Color for Orchid Show posts */
+      .status-Orchid-Show { border-top-color: #f1c40f; } /* Gold */
+      /* Color for Other posts */
+      .status-Other { border-top-color: #95a5a6; } /* Grey */
+    </style>
+  </head>
+  <body>
+
+    <div class="container py-5 text-center">
+      <div class="mb-4">
+        <h1 class="fw-bold mb-0"><?= CONFIG.ORGANIZATION_NAME ?></h1>
+        <div class="hub-subtitle fw-bold mb-2">Social Media Content Hub</div>
+        <button class="btn btn-success rounded-pill px-4 mt-3 shadow" data-bs-toggle="modal" data-bs-target="#strategyModal">🗺️ VIEW CAMPAIGN STRATEGY</button>
+      </div>
+
+      <div class="row justify-content-center mb-4">
+        <div class="col-md-6 col-lg-5">
+          <div class="input-group shadow-sm" style="border-radius: 50px; overflow: hidden; border: 1px solid #ddd;">
+            <span class="input-group-text bg-white border-0 ps-3 pe-2 text-muted">🔍</span>
+            <input 
+              type="text" 
+              id="dashboardSearch" 
+              class="form-control border-0 ps-1 py-2" 
+              placeholder="Search text, series, dates..." 
+              onkeyup="renderCards()"
+              style="outline: none; box-shadow: none; font-size: 0.9rem;"
+            />
+          </div>
+        </div>
+      </div>
+
+      <div class="mb-4">
+        <div id="statusFilters" class="mb-2">
+          <button class="filter-btn" onclick="setFilter('status', 'Scheduled', this)">🟢 Scheduled</button>
+          <button class="filter-btn" onclick="setFilter('status', 'Published', this)">🔵 Published</button>
+          <button class="filter-btn filter-btn-drafts" onclick="setFilter('status', 'Drafts', this)">📝 Drafts</button>
+          <button class="filter-btn filter-btn-needs" onclick="setFilter('status', 'Needs Content', this)">🔴 Needs Content</button>
+          <button class="filter-btn active" onclick="setFilter('status', 'All', this)">All Posts</button> 
+        </div>
+        <div id="seriesFilters">
+          <button class="filter-btn active" onclick="setFilter('series', 'All', this)">Full Collection</button>
+          <button class="filter-btn" onclick="setFilter('series', 'Monday', this)">Monday Mix</button>
+          <button class="filter-btn" onclick="setFilter('series', 'Tuesday', this)">Tuesday Clinic</button>
+          <button class="filter-btn" onclick="setFilter('series', 'Wednesday', this)">Wednesday's Genus/Species Gallery</button>
+          <button class="filter-btn" onclick="setFilter('series', 'Thursday', this)">Thirsty Thursday</button>
+          <button class="filter-btn" onclick="setFilter('series', 'Friday', this)">Fun Fact Friday</button>
+          <button class="filter-btn" onclick="setFilter('series', 'Orchid Show', this)">Orchid Show</button>
+          <button class="filter-btn" onclick="setFilter('series', 'Other', this)">Other</button>
+        </div>
+      </div>
+
+      <div id="plannerGrid" class="row g-4 text-start"></div>
+    </div>
+
+    <div class="modal fade" id="strategyModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content border-0">
+          <div class="modal-header border-0 bg-light"><h4 class="fw-bold m-0">Campaign Strategy Brief</h4><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+          <div class="modal-body p-5">
+            <div class="table-responsive">
+              <table class="table-strat">
+                <thead><tr><th>Status</th><th>Series Title</th><th>Frequency</th><th>Primary Goal</th><th>Target Audience</th></tr></thead>
+                <tbody id="strategyTableBody"></tbody>
+              </table>
+            </div>
+            
+            <div class="breakdown-header">Campaign Breakdown: The New Series</div>
+            
+            <span class="breakdown-day">1. Monday Mix (Rotating Topics)</span>
+            <span class="breakdown-subhead">The Vibe: <span style="font-weight: normal;">Fresh start to the week.</span></span>
+            <span class="breakdown-subhead">Rotation Ideas:</span>
+            <div class="breakdown-content">
+              Week 1: Society News (Meeting reminders, Zoom links).<br>
+              Week 2: Member Bloom Room (Sharing a photo of what’s blooming in a member's house).<br>
+              Week 3: Volunteer Spotlight (Thanking someone "behind the scenes").<br>
+              Week 4: Prep for the Show (Countdown/Logistics).
+            </div>
+            
+            <span class="breakdown-day">2. Troubleshoot Tuesday (The "Clinic")</span>
+            <span class="breakdown-subhead">The Focus: <span style="font-weight: normal;">Visual identification of problems.</span></span>
+            <span class="breakdown-subhead">Content Ideas:</span>
+            <div class="breakdown-content breakdown-italic">
+              "Is it Sunburn or Fungus?" (Side-by-side photo guides).<br>
+              "The Pest Patrol" (Identifying mealybugs, scale, or spider mites).<br>
+              "Potting Panic" (When to repot and how to tell if the media is "sour").
+            </div>
+            <span class="breakdown-subhead">Call To Action: <span style="font-weight: normal;">"Post a photo of your 'problem plant' in the comments for a community check-up!"</span></span>
+
+            <span class="breakdown-day">3. Wednesday's Genus/Species Gallery (Botanical Education)</span>
+            <span class="breakdown-subhead">The Focus: <span style="font-weight: normal;">High-level overviews of specific orchid genera.</span></span>
+            <span class="breakdown-subhead" style="font-style: italic;">The Content: <span style="font-weight: normal;">Discussing the history, general care, and unique traits of a genus (e.g., Cattleya or Dendrobium) without getting lost in specific species names yet.</span></span>
+            <span class="breakdown-subhead">Call To Action: <span style="font-weight: normal;">"Do you have a favorite in this genus? Tell us why!"</span></span>
+            
+            <span class="breakdown-day">4. Thirsty Thursday (Culture & Maintenance)</span>
+            <span class="breakdown-subhead">The Focus: <span style="font-weight: normal;">The 5-week rotation for keeping plants alive and thriving.</span></span>
+            <span class="breakdown-subhead">Rotation:</span>
+            <div class="breakdown-content breakdown-italic">
+              Week 1: Method (Soaker vs. Sprayer).<br>
+              Week 2: Water Quality (Rain vs. Tap).<br>
+              Week 3: Environment (Humidity & Air).<br>
+              Week 4: Signs of Thirst (Reading Pseudobulbs).<br>
+              Week 5: The Deep Clean (Salt Flushing).
+            </div>
+            
+            <span class="breakdown-day">5. Fun Fact Friday (The "Historian" Corner)</span>
+            <span class="breakdown-subhead">The Focus: <span style="font-weight: normal;">Weird, wild, and historical orchid trivia.</span></span>
+            <span class="breakdown-subhead">Topics: <span style="font-weight: normal;">Vanilla (the edible orchid), Victorian "Orchid Hunters," mimicry (orchids that look like animals), and extreme longevity.</span></span>
+            <span class="breakdown-subhead">Call To Action: <span style="font-weight: normal;">"Did you know this? Share your favorite plant fact below!"</span></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade" id="postModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg">
+          <div class="modal-header border-0"><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+          <div id="modalContent" class="modal-body p-4"></div>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+      let allData = [];
+      let currentFilters = { status: 'All', series: 'All' };
+
+      window.onload = () => {
+        google.script.run.withSuccessHandler(data => { allData = data; renderCards(); }).getPlannerData();
+        google.script.run.withSuccessHandler(data => {
+          document.getElementById('strategyTableBody').innerHTML = data.map(item => {
+            let pClass = 'pill-active';
+            let sLower = item.status.toLowerCase();
+            
+            if(sLower.includes('dev')) {
+              pClass = 'pill-dev';
+            } else if(sLower.includes('info')) {
+              pClass = 'pill-info';
+            }
+
+            return `<tr><td><span class="strat-pill ${pClass}">${item.status}</span></td><td><b>${item.title}</b></td><td>${item.frequency}</td><td>${item.goal}</td><td>${item.audience}</td></tr>`;
+          }).join('');
+        }).getStrategyData();
+      };
+
+      function setFilter(type, value, btn) {
+        currentFilters[type] = value;
+        btn.parentElement.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        renderCards();
+      }
+
+      function renderCards() {
+        const container = document.getElementById('plannerGrid');
+        const searchQuery = document.getElementById('dashboardSearch') ? document.getElementById('dashboardSearch').value.toLowerCase().trim() : '';
+
+        const filtered = allData.filter(item => {
+          const sMatch = currentFilters.status === 'All' || item.status.toLowerCase().trim() === currentFilters.status.toLowerCase().trim();
+          const target = currentFilters.series.toLowerCase().trim();
+          const itemSeries = item.series.toLowerCase().trim();
+          const serMatch = currentFilters.series === 'All' || itemSeries.includes(target);
+          
+          const itemContent = (item.content || '').toLowerCase();
+          const itemDate = (item.date || '').toLowerCase();
+          const textMatch = !searchQuery || 
+                            itemContent.includes(searchQuery) || 
+                            itemSeries.includes(searchQuery) || 
+                            itemDate.includes(searchQuery);
+      
+          return sMatch && serMatch && textMatch;
+        });
+        
+        if (filtered.length === 0) {
+          container.innerHTML = `<div class="col-12 text-center text-muted py-5"><i>No matching archival data or planning items found for your search query.</i></div>`;
+          return;
+        }
+
+        container.innerHTML = filtered.map(item => {
+          const idx = allData.indexOf(item);
+          const statusClass = item.status.replace(/\s+/g, '-');
+          return `
+            <div class="col-md-6 col-lg-4">
+              <div class="card status-${statusClass}" onclick="expandPost(${idx})">
+                <div class="img-container">
+                  <div class="loading-pulse" id="pulse-${idx}"></div>
+                  <img id="img-${idx}" class="card-img-top" onload="this.classList.add('img-loaded'); document.getElementById('pulse-${idx}').style.display='none';">
+                </div>
+                <div class="card-body">
+                  <div class="series-tag">${item.series}</div>
+                  <h6 class="fw-bold mb-2">${item.date}</h6>
+                  <p class="small text-muted mb-0">${item.content.substring(0,300)}...</p>
+                  <div class="read-more-label">Read More →</div>
+                </div>
+              </div>
+            </div>`;
+        }).join('');
+
+        filtered.forEach(item => {
+          const idx = allData.indexOf(item);
+          google.script.run.withSuccessHandler(b => { 
+            const img = document.getElementById(`img-${idx}`);
+            if(img) img.src = b; 
+          }).getThumbnail(item.mediaLink);
+        });
+      }
+
+      function expandPost(idx) {
+        const item = allData[idx];
+        const src = document.getElementById(`img-${idx}`).src;
+        document.getElementById('modalContent').innerHTML = `<div class="row"><div class="col-md-5"><img src="${src}" class="img-fluid rounded shadow"></div><div class="col-md-7"><div class="series-tag">${item.series}</div><h3 class="fw-bold mb-3">${item.date}</h3><p style="white-space:pre-wrap;">${item.content}</p></div></div>`;
+        new bootstrap.Modal(document.getElementById('postModal')).show();
+      }
+    </script>
+  </body>
+</html>
